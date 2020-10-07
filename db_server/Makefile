@@ -7,6 +7,8 @@ INC_DIR = include
 SRC_DIR = src
 OBJ_DIR = objects
 LIB_DIR = lib
+LIBRARYS = -lrequest
+
 
 #Compiler flags
 CFLAGS=-I$(INC_DIR) -L$(LIB_DIR) -g
@@ -21,7 +23,7 @@ OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 all: sql_server
 
 sql_server: $(OBJS)
-	$(LD) $^ -o sql_server
+	$(LD) $^ -o sql_server -L$(LIB_DIR) $(LIBRARYS)
 
 #Compiling all objects
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c

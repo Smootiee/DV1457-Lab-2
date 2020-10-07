@@ -1,5 +1,5 @@
 
-#include <request.h>
+#include "../include/request.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdlib.h>
@@ -53,7 +53,10 @@ int main(int argc, char const *argv[]){
 
     while(1){
     valread = read(new_socket, str, 1024);
-    printf("%s\n", str);
+    //printf("%s\n", str);
+char** error;
+print_request(parse_request(str,error));
+
     send(new_socket, hello, strlen(hello), 0);
     printf("Hello message sent\n");
     }
