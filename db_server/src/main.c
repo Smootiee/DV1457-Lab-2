@@ -1,5 +1,5 @@
 
-#include "../include/request.h"
+#include "request.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdlib.h>
