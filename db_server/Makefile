@@ -1,6 +1,7 @@
 #Compiler and linker
-CC = gcc
-LD = gcc
+
+CC = LD_LIBRARY_PATH=lib gcc
+LD = LD_LIBRARY_PATH=lib gcc
 
 #Relative folder locations
 INC_DIR = include
@@ -18,9 +19,10 @@ SRCS = $(wildcard $(SRC_DIR)/*.c)
 
 #Map sources to corresponding object file
 OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
-
+export LD_LIBRARY_PATH=lib
 #Creation of sqlserver
 all: sql_server
+	export LD_LIBRARY_PATH=lib
 
 sql_server: $(OBJS)
 	$(LD) $^ -o sql_server -L$(LIB_DIR) $(LIBRARYS)
