@@ -19,7 +19,7 @@ SRCS = $(wildcard $(SRC_DIR)/*.c)
 
 #Map sources to corresponding object file
 OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
-export LD_LIBRARY_PATH=lib
+
 #Creation of sqlserver
 all: sql_server
 	export LD_LIBRARY_PATH=lib
