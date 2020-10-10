@@ -4,17 +4,19 @@
 
 #include "request.h"
 
-int createTable(request_t* request);
+char* dbRequest(request_t* request);
 
-int listTables(request_t* request);
+char* createTable(request_t* request);
 
-int listChemas(request_t* request);
+char* listTables(request_t* request);
 
-int dropTable(request_t* request);
+char* listChemas(request_t* request);
 
-int insertRecord(request_t* request);
+char* dropTable(request_t* request);
 
-int select(request_t* request);
+char* insertRecord(request_t* request);
+
+char* selectStatement(request_t* request);
 
 
 #pragma GCC visibility pop

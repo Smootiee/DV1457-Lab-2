@@ -1,32 +1,63 @@
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "request.h"
 
 
 
-int createTable(request_t* request){
+
+char* createTable(request_t* request){
     //check if table exists
     //If it does, return
     //If it doesn't, create it
 }
 
-int listTables(request_t* request){
+char* listTables(request_t* request){
     //check files in database_folder and print    
 }
 
-int listChemas(request_t* request){
+char* listChemas(request_t* request){
     //check all metafiles in database folder, print names and info for each.    
 }
 
-int dropTable(request_t* request){
+char* dropTable(request_t* request){
     //Check if file exists, and deletes them if so    
 }
 
-int insertRecord(request_t* request){
+char* insertRecord(request_t* request){
     //check if file exists
     //check if insert is correctly formatted
     //insert into table    
 }
 
-int select(request_t* request){
+char* selectStatement(request_t* request){
     //check if table exists
     //read and print selected where   
+}
+
+char* dbRequest(request_t* request){
+    switch (request->request_type)
+    {
+    case RT_CREATE:
+        return createTable(request);
+        break;
+    case RT_TABLES:
+        return listTables(request);
+        break;
+    case RT_SCHEMA:
+        return listChemas(request);
+        break;
+    case RT_DROP:
+        return dropTable(request);
+        break;
+    case RT_INSERT:
+        return insertRecord(request);
+        break;
+    case RT_SELECT:
+        return selectStatement(request);
+        break;    
+    default:
+        printf("REQUEST NOT DEFINED");
+        exit(1);
+    }
 }

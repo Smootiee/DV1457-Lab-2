@@ -2,7 +2,9 @@
 #define CLIENT_MANAGER_H
 #pragma GCC visibility push(default)
 
-#include "request.h"
+
+void *clientHandler(void *ptr);
+
 
 
 
