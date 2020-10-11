@@ -3,6 +3,9 @@
 #include <unistd.h>
 #include <string.h>
 
+//To list files in dir
+#include <dirent.h>
+
 #include "request.h"
 
 
@@ -28,7 +31,7 @@ char* createTable(request_t* request){
         //Create files
         f = fopen(path, "w");
         fclose(f);
-        strcat(path, "_dump");
+        strcat(path, "_data");
         f = fopen(path, "w");
         fclose(f);
         strcpy(path, "Table ");
@@ -38,8 +41,30 @@ char* createTable(request_t* request){
     return path;
 }
 
+//check files in database_folder and return tablenames
 char* listTables(request_t* request){
-    //check files in database_folder and print    
+    
+    char* tables = malloc(sizeof(char)*4096);
+    strcpy(tables,"");
+    DIR* d;
+    struct dirent* dir;
+    d = opendir("../database");
+    if(d != NULL){
+        while((dir = readdir(d)) != NULL){
+            //Check if file
+            if(dir->d_type == 8){
+                //points to last _ charachter
+                char* under = strrchr(dir->d_name, '_'); 
+                //if no underscore, or doesn't end with _data, it's a table name
+                if(under == NULL || strcmp(under, "_data") != 0){
+                    strcat(tables,dir->d_name);
+                    strcat(tables,"\n");
+                }
+            }           
+        }
+        closedir(d);
+    }
+    return tables;
 }
 
 char* listChemas(request_t* request){
@@ -63,7 +88,7 @@ char* dropTable(request_t* request){
         //delete files
         fclose(f);
         if(!remove(path)){
-            strcat(path, "_dump");
+            strcat(path, "_data");
             remove(path),
             strcpy(path, "Table ");
             strcat(path, request->table_name);
