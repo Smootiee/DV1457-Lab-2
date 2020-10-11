@@ -17,15 +17,16 @@ char* createTable(request_t* request){
     strcpy(path, "../database/");
     strcat(path,request->table_name);
     printf("%s\n",path);
-
-    if(access(request->table_name, F_OK) == -1){        
+    FILE *f = fopen(path, "r");
+    if(f != NULL){        
         //Table already exists
         strcpy(path,"Table ");
         strcat(path, request->table_name);
         strcat(path," already exists\n");
+        fclose(f);
     }else{
         //Create files
-        FILE *f = fopen(path, "w");
+        f = fopen(path, "w");
         fclose(f);
         strcat(path, "_dump");
         f = fopen(path, "w");
@@ -45,20 +46,22 @@ char* listChemas(request_t* request){
     //check all metafiles in database folder, print names and info for each.    
 }
 
+//Check if file exists, and deletes them if so
 char* dropTable(request_t* request){
-    //Check if file exists, and deletes them if so
-
+    
     char* path = malloc(sizeof(char)*255);
     strcpy(path, "../database/");
     strcat(path,request->table_name);
-
-    if(access(request->table_name, F_OK) != -1){        
-        //Table already exists
+    
+    FILE* f = fopen(path, "r");
+    if(f == NULL){        
+        //Table doesn't exist
         strcpy(path,"Table ");
         strcat(path, request->table_name);
         strcat(path," doesn't exist\n");
     }else{
-        //delete file
+        //delete files
+        fclose(f);
         if(!remove(path)){
             strcat(path, "_dump");
             remove(path),
