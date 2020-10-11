@@ -38,6 +38,7 @@ void *clientHandler(void *ptr){
         if(request == NULL){
             // printf("3\n");
             send(socket_fd, *req_error, strlen(*req_error), 0);
+            send(socket_fd, "\n", 1, 0);
             free(*req_error);
         }else{
             //printf("4\n");
