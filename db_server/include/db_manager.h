@@ -10,7 +10,7 @@ char* createTable(request_t* request);
 
 char* listTables(request_t* request);
 
-char* listChemas(request_t* request);
+char* listSchemas(request_t* request);
 
 char* dropTable(request_t* request);
 

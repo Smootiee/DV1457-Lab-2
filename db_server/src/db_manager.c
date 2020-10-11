@@ -33,6 +33,7 @@ char* createTable(request_t* request){
         fclose(f);
         strcat(path, "_data");
         f = fopen(path, "w");
+        //TODO: INSERT METADATA
         fclose(f);
         strcpy(path, "Table ");
         strcat(path, request->table_name);
@@ -67,7 +68,7 @@ char* listTables(request_t* request){
     return tables;
 }
 
-char* listChemas(request_t* request){
+char* listSchemas(request_t* request){
     //check all metafiles in database folder, print names and info for each.    
 }
 

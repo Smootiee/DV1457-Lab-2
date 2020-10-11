@@ -25,33 +25,25 @@ void *clientHandler(void *ptr){
         read_chars = 0;
         read_chars = read(socket_fd, str, BUFFER_SIZE);
 
-        //TODO: check if starts with '.', marking special command
         //read until semicolon
         while(read_chars<BUFFER_SIZE && strchr(str,';') == NULL && str[0] != '.'){
             read_chars += read(socket_fd, &str[read_chars], BUFFER_SIZE-read_chars);
         }
 
         //TODO: split on semicolon and parse each request seperatly.
-        // printf("1%s\n", str);
         request = parse_request(str,req_error);
-        // printf("2\n");
-        if(request == NULL){
-            // printf("3\n");
+        if(request == NULL){  
             send(socket_fd, *req_error, strlen(*req_error), 0);
             send(socket_fd, "\n", 1, 0);
             free(*req_error);
         }else{
-            //printf("4\n");
             print_request(request);
             if(request->request_type == RT_QUIT){
                 running = 0;
-            }else{
-                //printf("5\n");
+            }else{  
                 char* response = dbRequest(request);
                 send(socket_fd, response, strlen(response), 0);
-                free(response);
-                //TODO: communicate with db
-            
+                free(response);            
             }
             destroy_request(request);
         }
