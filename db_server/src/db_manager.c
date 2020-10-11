@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-
-//To list files in dir
 #include <dirent.h>
 
 #include "request.h"
@@ -116,6 +114,7 @@ char* selectStatement(request_t* request){
 }
 
 char* dbRequest(request_t* request){
+    char* error;
     switch (request->request_type)
     {
         case RT_CREATE:
@@ -125,7 +124,7 @@ char* dbRequest(request_t* request){
             return listTables(request);
             break;
         case RT_SCHEMA:
-            return listChemas(request);
+            return listSchemas(request);
             break;
         case RT_DROP:
             return dropTable(request);
@@ -137,7 +136,9 @@ char* dbRequest(request_t* request){
             return selectStatement(request);
             break;    
         default:
-            return "REQUEST NOT DEFINED";
+            error = malloc(sizeof(char)*255);
+            strcpy(error, "Request type not defined\n");
+            return error;
             
     }
 }
