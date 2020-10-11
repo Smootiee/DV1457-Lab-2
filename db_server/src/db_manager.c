@@ -1,15 +1,20 @@
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <unistd.h>
 #include "request.h"
 
 
 
+//table_name = metadata
+//table_name_data = actual table
 
 char* createTable(request_t* request){
-    //check if table exists
-    //If it does, return
-    //If it doesn't, create it
+    
+    if(access(request->table_name, F_OK) != -1){
+        return 'Table already exists';
+    }else{
+        
+    }
 }
 
 char* listTables(request_t* request){
@@ -36,7 +41,7 @@ char* selectStatement(request_t* request){
 }
 
 char* dbRequest(request_t* request){
-    switch (request->request_type)
+        switch (request->request_type)
     {
     case RT_CREATE:
         return createTable(request);
@@ -57,7 +62,7 @@ char* dbRequest(request_t* request){
         return selectStatement(request);
         break;    
     default:
-        printf("REQUEST NOT DEFINED");
-        exit(1);
+        return "REQUEST NOT DEFINED";
+        
     }
 }
