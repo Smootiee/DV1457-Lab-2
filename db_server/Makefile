@@ -1,14 +1,14 @@
 #Compiler and linker
 
-CC = LD_LIBRARY_PATH=lib gcc
-LD = LD_LIBRARY_PATH=lib gcc
+CC = gcc
+LD = gcc
 
 #Relative folder locations
 INC_DIR = include
 SRC_DIR = src
 OBJ_DIR = objects
 LIB_DIR = lib
-LIBRARYS = -lrequest -lpthread
+LIBRARYS = lib/librequest.so -lpthread
 
 
 #Compiler flags
