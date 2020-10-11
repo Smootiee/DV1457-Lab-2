@@ -12,7 +12,7 @@ void *clientHandler(void *ptr){
     int socket_fd = (int)ptr;
     char* str = malloc(sizeof(char)*BUFFER_SIZE);
     request_t* request;
-    char** req_error;
+    char** req_error = malloc(sizeof(char*));
     
     short running = 1;
     
@@ -32,13 +32,15 @@ void *clientHandler(void *ptr){
         }
 
         //TODO: split on semicolon and parse each request seperatly.
-        printf("1\n");
+        // printf("1%s\n", str);
         request = parse_request(str,req_error);
-        printf("1\n");
+        // printf("2\n");
         if(request == NULL){
+            // printf("3\n");
             send(socket_fd, *req_error, strlen(*req_error), 0);
             free(*req_error);
         }else{
+            // printf("4\n");
             print_request(request);
             if(request->request_type == RT_QUIT){
                 running = 0;
@@ -50,7 +52,7 @@ void *clientHandler(void *ptr){
             destroy_request(request);
         }
     }
-
+    free(req_error);
     free(str);
     close(socket_fd);
     pthread_exit(1);
