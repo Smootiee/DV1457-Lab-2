@@ -1,7 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
+
 #include "request.h"
+
 
 
 
@@ -10,11 +13,28 @@
 
 char* createTable(request_t* request){
     
-    if(access(request->table_name, F_OK) != -1){
-        return 'Table already exists';
+    char* path = malloc(sizeof(char)*255);
+    strcpy(path, "../database/");
+    strcat(path,request->table_name);
+    printf("%s\n",path);
+
+    if(access(request->table_name, F_OK) == -1){        
+        //Table already exists
+        strcpy(path,"Table ");
+        strcat(path, request->table_name);
+        strcat(path," already exists\n");
     }else{
-        
+        //Create files
+        FILE *f = fopen(path, "w");
+        fclose(f);
+        strcat(path, "_dump");
+        f = fopen(path, "w");
+        fclose(f);
+        strcpy(path, "Table ");
+        strcat(path, request->table_name);
+        strcat(path, " created successfully.\n");
     }
+    return path;
 }
 
 char* listTables(request_t* request){
@@ -26,7 +46,33 @@ char* listChemas(request_t* request){
 }
 
 char* dropTable(request_t* request){
-    //Check if file exists, and deletes them if so    
+    //Check if file exists, and deletes them if so
+
+    char* path = malloc(sizeof(char)*255);
+    strcpy(path, "../database/");
+    strcat(path,request->table_name);
+
+    if(access(request->table_name, F_OK) != -1){        
+        //Table already exists
+        strcpy(path,"Table ");
+        strcat(path, request->table_name);
+        strcat(path," doesn't exist\n");
+    }else{
+        //delete file
+        if(!remove(path)){
+            strcat(path, "_dump");
+            remove(path),
+            strcpy(path, "Table ");
+            strcat(path, request->table_name);
+            strcat(path, " dropped succesfully!\n");
+        }else{
+            strcpy(path, "Failed to drop table ");
+            strcat(path, request->table_name);
+            strcpy(path,".\n");
+        }
+    }
+    return path;
+
 }
 
 char* insertRecord(request_t* request){
@@ -41,28 +87,28 @@ char* selectStatement(request_t* request){
 }
 
 char* dbRequest(request_t* request){
-        switch (request->request_type)
+    switch (request->request_type)
     {
-    case RT_CREATE:
-        return createTable(request);
-        break;
-    case RT_TABLES:
-        return listTables(request);
-        break;
-    case RT_SCHEMA:
-        return listChemas(request);
-        break;
-    case RT_DROP:
-        return dropTable(request);
-        break;
-    case RT_INSERT:
-        return insertRecord(request);
-        break;
-    case RT_SELECT:
-        return selectStatement(request);
-        break;    
-    default:
-        return "REQUEST NOT DEFINED";
-        
+        case RT_CREATE:
+            return createTable(request);
+            break;
+        case RT_TABLES:
+            return listTables(request);
+            break;
+        case RT_SCHEMA:
+            return listChemas(request);
+            break;
+        case RT_DROP:
+            return dropTable(request);
+            break;
+        case RT_INSERT:
+            return insertRecord(request);
+            break;
+        case RT_SELECT:
+            return selectStatement(request);
+            break;    
+        default:
+            return "REQUEST NOT DEFINED";
+            
     }
 }

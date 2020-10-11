@@ -8,15 +8,13 @@
 #include "request.h"
 #include "client_manager.h"
 
-#define PORT 2020
-
 void printHelpText();
 
 //TODO: exception handler to close threads nicely when ctrl+c
 
 int main(int argc, char const *argv[]){
     //Default port
-    int port = 2020;
+    int port = 1337;
     //Get commandline arguments
     for(int i = 1; i < argc; i++){
         if(strcmp(argv[i], "-h") == 0){
@@ -33,7 +31,8 @@ int main(int argc, char const *argv[]){
             exit(3);
         }
     }
-
+    
+    
     //Create the listening socket
     int socket_fd;
     struct sockaddr_in server_address;

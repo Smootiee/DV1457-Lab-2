@@ -40,13 +40,15 @@ void *clientHandler(void *ptr){
             send(socket_fd, *req_error, strlen(*req_error), 0);
             free(*req_error);
         }else{
-            printf("4\n");
+            //printf("4\n");
             print_request(request);
             if(request->request_type == RT_QUIT){
                 running = 0;
             }else{
-                printf("5\n");
-                dbRequest(request);
+                //printf("5\n");
+                char* response = dbRequest(request);
+                send(socket_fd, response, strlen(response), 0);
+                free(response);
                 //TODO: communicate with db
             
             }
