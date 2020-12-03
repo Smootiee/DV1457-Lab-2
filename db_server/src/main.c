@@ -12,6 +12,9 @@ void printHelpText();
 
 //TODO: exception handler to close threads nicely when ctrl+c
 
+
+
+
 int main(int argc, char const *argv[]){
     //Default port
     int port = 1337;
