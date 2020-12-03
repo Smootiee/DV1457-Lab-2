@@ -30,8 +30,29 @@ char* createTable(request_t* request){
         f = fopen(path, "w");
         fclose(f);
         strcat(path, "_data");
-        f = fopen(path, "w");
+        f = fopen(path, "w+");
         //TODO: INSERT METADATA
+        //Write down Type, Size and Column.
+
+        column_t *colNams = request->columns;
+        
+
+        while (colNams != NULL){
+    
+            fprintf(f, "%s, %c, %c, %d\n", colNams->name, colNams->data_type, colNams->is_primary_key, colNams->char_size);
+            // fwrite(colNams->name , sizeof(&colNams->name) , 1 , f);
+            // fwrite(colNams->data_type , sizeof(char) , 1 , f);
+            // fwrite(colNams->is_primary_key , sizeof(char) , 1 , f);
+            // fwrite(colNams->char_size, sizeof(int) , 1 , f);
+            
+
+            colNams = colNams->next;
+        }
+        
+        // fread(request, sizeof(char), 32 , f);
+        // print_request(request);
+
+
         fclose(f);
         strcpy(path, "Table ");
         strcat(path, request->table_name);
