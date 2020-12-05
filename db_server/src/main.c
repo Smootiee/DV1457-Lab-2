@@ -5,7 +5,7 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "request.h"
+#include "../lib/request.h"
 #include "client_manager.h"
 
 void printHelpText();

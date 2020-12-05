@@ -5,21 +5,17 @@
 #include <dirent.h>
 #include <pthread.h>
 
-#include "request.h"
+#include "../lib/request.h"
+#include "db_manager.h"
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_init(lock);
 
-struct metaData{
-    char name[255];
-    int data_type;
-    int is_primary_key;
-    int char_size;
-};
 
 
-//table_name = metadata
-//table_name_data = actual table
+
+//table_name = actual table
+//table_name_data = metadata
 
 char* createTable(request_t* request){
     
@@ -55,6 +51,7 @@ char* createTable(request_t* request){
         strcat(path, request->table_name);
         strcat(path, " created successfully.\n");
     }
+    pthread_mutex_unlock(&lock);
     return path;
 }
 
@@ -81,6 +78,7 @@ char* listTables(request_t* request){
         }
         closedir(d);
     }
+    pthread_mutex_unlock(&lock);
     return tables;
 }
 
@@ -100,33 +98,26 @@ char* listSchemas(request_t* request){
     }else{
         fclose(f);    
         strcat(path, "_data");
-        f = fopen(path, "r");
-        strcpy(path,"");
-        
-        int size = 255;
-        char line[size];
-        struct metaData data;
-        
-        while (fgets(line,size, f) != NULL){
-
-            int r = sscanf(line, "%s %d %d %d\n" ,data.name, &data.data_type, &data.is_primary_key,&data.char_size);                        
-            // printf("metaData contents:\t%s,%d,%d,%d\n", data.name, data.data_type,data.is_primary_key, data.char_size);
-            // fflush(stdout);
-            strcat(path,data.name);
-            if(data.data_type == DT_INT){
+        struct metaData* data = getMetaData(path);
+        struct metaData* orig = data;
+        strcpy(path, "");
+        while (data != NULL){
+            strcat(path,data->name);
+            if(data->data_type == DT_INT){
                 strcat(path,"\tINT\n");
             }else{
                 char buff[20];
-                snprintf(buff,20,"%d", data.char_size);
+                snprintf(buff,20,"%d", data->char_size);
                 strcat(path,"\tVARCHAR(");
                 strcat(path, buff);
                 strcat(path,")\n");
             }
-            strcpy(data.name,"");
+            data = data->next;
         }
+        deleteMetaData(orig);
         fclose(f);
     }
-    
+    pthread_mutex_unlock(&lock);
     return path;
 }
 
@@ -158,6 +149,7 @@ char* dropTable(request_t* request){
             strcpy(path,".\n");
         }
     }
+    pthread_mutex_unlock(&lock);
     return path;
 
 }
@@ -166,60 +158,102 @@ char* insertRecord(request_t* request){
     //check if file exists
     //check if insert is correctly formatted
     //insert into table
-
-
-    char* path = malloc(sizeof(char)*255);
+    char* path = malloc(sizeof(char)*1500);
     strcpy(path, "../database/");
     strcat(path,request->table_name);
-    printf("%s\n",path);
-    FILE *f = fopen(path, "r");
-    if(f == NULL){        
-        //Table already exists
+    FILE *ftab = fopen(path, "a");
+    if(ftab == NULL){        
+        //Table doesn't exists
         strcpy(path,"Table ");
         strcat(path, request->table_name);
         strcat(path," does not exist!\n");
-        fclose(f);
+        fclose(ftab);
     }else{
-        //Create files
-        f = fopen(path, "a");
-        fclose(f);
+       
         strcat(path, "_data");
-        f = fopen(path, "r");
+        FILE *fmeta = fopen(path, "r");
+        if(fmeta == NULL){
+            strcpy(path, "Error opening the table");
+            return path;
+        }
+        struct metaData* data = getMetaData(path);
+        struct metaData* orig = data;
+        char* entry = malloc(sizeof(char)*1024);
+        column_t* currentCol = request->columns;
+        char* tempBuff = malloc(sizeof(char)*150);
+        int error = 0;
+        while(data != NULL && currentCol != NULL && !error){
+            if ((data->next == NULL && currentCol->next != NULL) || (data->next != NULL && currentCol->next == NULL)){
+                error = 1;
+                strcpy(path, "Number of columns not matching\n");
+            }
+            if(currentCol->data_type != data->data_type){
+                strcpy(path, "Datatype mismatch\n");
+                error = 1;
+            }
+            memset(tempBuff,0,150*sizeof(char));
+            
+            if(data->data_type == DT_INT){
+                snprintf(tempBuff,12, "%d ", currentCol->int_val);
+            }else if(data->data_type == DT_VARCHAR){
+                snprintf(tempBuff,data->char_size, "%s ", currentCol->char_val);
+            }
+            strcat(entry, tempBuff);
+            
+            data = data->next;
+            currentCol = currentCol->next;
+        }
+        deleteMetaData(orig);
 
-        // data_type = varchar jämför med samma column i _data typen.
+        if(!error){
+            strcpy(path, "Inserted values(");
+            strcat(path, entry);
+            strcat(path,") to table ");
+            strcat(path, request->table_name);
+            strcat(path, " successfully.\n");
+            
+            fprintf(ftab,"%s\n", entry);
+        }
         
-        column_t *colNams = request->columns;
-        
-        /*
-        CREATE TABLE table ( id INT, name VARCHAR(8));
-        INSERT INTO TABLE table VALUES (123, "yeet");
-        */
 
-
-        // while(colNams->next != NULL){
-
-        //     if(colNams->int_val == int){
-        //         fprintf
-        //     }
-
-        //     fprintf(f, "%d, %c\n",colNams->int_val);
-        //     request->columns->next->char_val;
-
-        //     colNams = colNams->next;
-        // }
-
-
-        fclose(f);
-        strcpy(path, "Table ");
-        strcat(path, request->table_name);
-        strcat(path, " created successfully.\n");
+        fclose(ftab);
+        fclose(fmeta);
+        free(entry);
+        free(tempBuff);
     }
+    pthread_mutex_unlock(&lock);
     return path;
 }
 
 char* selectStatement(request_t* request){
     //check if table exists
-    //read and print selected where   
+    //read and print selected   
+
+    char* path = malloc(sizeof(char)*1024);
+    strcpy(path, "../database/");
+    strcat(path,request->table_name);
+    FILE *f = fopen(path, "r");
+
+    if (request->columns == NULL){
+        int size = 1024;
+        char line[size];
+        int lines =0;
+        while (fgets(line,size, f) != NULL){
+            lines++;
+        }
+        path = realloc(path,sizeof(char)*1024*lines);
+        memset(path,0,sizeof(char)*1024*lines);
+        rewind(f);
+        while (fgets(line,size, f) != NULL){
+            strcat(path, line);
+        }
+    }
+    else
+    {
+        strcpy(path, "Selecting columns not available");
+    }
+    pthread_mutex_unlock(&lock);
+    return path;
 }
 
 char* dbRequest(request_t* request){
@@ -251,5 +285,40 @@ char* dbRequest(request_t* request){
             return error;
             
     }
-    pthread_mutex_unlock(&lock);
+    
+}
+
+struct metaData* getMetaData(char* path){
+
+    FILE *f = fopen(path, "r");
+    if (f == NULL){
+        return NULL;
+    }else{
+
+        struct metaData* data, *current = NULL;
+        int size = 255;
+        char line[size];
+
+        if(fgets(line,size, f) != NULL){
+            data = malloc(sizeof(struct metaData));
+            current = data;
+            data->next=NULL;
+            sscanf(line, "%s %d %d %d\n" ,current->name, &current->data_type, &current->is_primary_key,&current->char_size);
+        }
+        while (fgets(line,size, f) != NULL){
+            current->next = malloc(sizeof(struct metaData));
+            current = current->next;
+            current->next = NULL;
+            sscanf(line, "%s %d %d %d\n" ,current->name, &current->data_type, &current->is_primary_key,&current->char_size);
+        }
+        
+        return data;
+    }
+}
+
+int deleteMetaData(struct metaData* data){
+    if(data->next != NULL){
+        deleteMetaData(data->next);
+    }
+    free(data);
 }
