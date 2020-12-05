@@ -3,10 +3,12 @@
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
+#include <pthread.h>
 
 #include "request.h"
 
-
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_init(lock);
 
 struct metaData{
     char name[255];
@@ -38,7 +40,6 @@ char* createTable(request_t* request){
         strcat(path, "_data");
         f = fopen(path, "w+");
         //TODO: INSERT METADATA
-        //Write down Type, Size and Column.
 
         column_t *colNams = request->columns;
         
@@ -164,7 +165,56 @@ char* dropTable(request_t* request){
 char* insertRecord(request_t* request){
     //check if file exists
     //check if insert is correctly formatted
-    //insert into table    
+    //insert into table
+
+
+    char* path = malloc(sizeof(char)*255);
+    strcpy(path, "../database/");
+    strcat(path,request->table_name);
+    printf("%s\n",path);
+    FILE *f = fopen(path, "r");
+    if(f == NULL){        
+        //Table already exists
+        strcpy(path,"Table ");
+        strcat(path, request->table_name);
+        strcat(path," does not exist!\n");
+        fclose(f);
+    }else{
+        //Create files
+        f = fopen(path, "a");
+        fclose(f);
+        strcat(path, "_data");
+        f = fopen(path, "r");
+
+        // data_type = varchar jämför med samma column i _data typen.
+        
+        column_t *colNams = request->columns;
+        
+        /*
+        CREATE TABLE table ( id INT, name VARCHAR(8));
+        INSERT INTO TABLE table VALUES (123, "yeet");
+        */
+
+
+        // while(colNams->next != NULL){
+
+        //     if(colNams->int_val == int){
+        //         fprintf
+        //     }
+
+        //     fprintf(f, "%d, %c\n",colNams->int_val);
+        //     request->columns->next->char_val;
+
+        //     colNams = colNams->next;
+        // }
+
+
+        fclose(f);
+        strcpy(path, "Table ");
+        strcat(path, request->table_name);
+        strcat(path, " created successfully.\n");
+    }
+    return path;
 }
 
 char* selectStatement(request_t* request){
@@ -174,6 +224,7 @@ char* selectStatement(request_t* request){
 
 char* dbRequest(request_t* request){
     char* error;
+    pthread_mutex_lock(&lock);
     switch (request->request_type)
     {
         case RT_CREATE:
@@ -200,4 +251,5 @@ char* dbRequest(request_t* request){
             return error;
             
     }
+    pthread_mutex_unlock(&lock);
 }
