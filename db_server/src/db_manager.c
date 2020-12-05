@@ -8,6 +8,13 @@
 
 
 
+struct metaData{
+    char name[255];
+    int data_type;
+    int is_primary_key;
+    int char_size;
+};
+
 
 //table_name = metadata
 //table_name_data = actual table
@@ -17,7 +24,6 @@ char* createTable(request_t* request){
     char* path = malloc(sizeof(char)*255);
     strcpy(path, "../database/");
     strcat(path,request->table_name);
-    printf("%s\n",path);
     FILE *f = fopen(path, "r");
     if(f != NULL){        
         //Table already exists
@@ -38,21 +44,11 @@ char* createTable(request_t* request){
         
 
         while (colNams != NULL){
-    
-            fprintf(f, "%s, %c, %c, %d\n", colNams->name, colNams->data_type, colNams->is_primary_key, colNams->char_size);
-            // fwrite(colNams->name , sizeof(&colNams->name) , 1 , f);
-            // fwrite(colNams->data_type , sizeof(char) , 1 , f);
-            // fwrite(colNams->is_primary_key , sizeof(char) , 1 , f);
-            // fwrite(colNams->char_size, sizeof(int) , 1 , f);
-            
-
+            fprintf(f, "%s %d %d %d\n", colNams->name, colNams->data_type, colNams->is_primary_key, colNams->char_size);  
+                 
             colNams = colNams->next;
         }
         
-        // fread(request, sizeof(char), 32 , f);
-        // print_request(request);
-
-
         fclose(f);
         strcpy(path, "Table ");
         strcat(path, request->table_name);
@@ -88,7 +84,49 @@ char* listTables(request_t* request){
 }
 
 char* listSchemas(request_t* request){
+    
     //check all metafiles in database folder, print names and info for each.    
+    char* path = malloc(sizeof(char)*255);
+    strcpy(path, "../database/");
+    strcat(path,request->table_name);
+    FILE *f = fopen(path, "r");
+    if(f == NULL){        
+        //Table doesn't exist
+        strcpy(path,"Table ");
+        strcat(path, request->table_name);
+        strcat(path," doesn't exists\n");
+        
+    }else{
+        fclose(f);    
+        strcat(path, "_data");
+        f = fopen(path, "r");
+        strcpy(path,"");
+        
+        int size = 255;
+        char line[size];
+        struct metaData data;
+        
+        while (fgets(line,size, f) != NULL){
+
+            int r = sscanf(line, "%s %d %d %d\n" ,data.name, &data.data_type, &data.is_primary_key,&data.char_size);                        
+            // printf("metaData contents:\t%s,%d,%d,%d\n", data.name, data.data_type,data.is_primary_key, data.char_size);
+            // fflush(stdout);
+            strcat(path,data.name);
+            if(data.data_type == DT_INT){
+                strcat(path,"\tINT\n");
+            }else{
+                char buff[20];
+                snprintf(buff,20,"%d", data.char_size);
+                strcat(path,"\tVARCHAR(");
+                strcat(path, buff);
+                strcat(path,")\n");
+            }
+            strcpy(data.name,"");
+        }
+        fclose(f);
+    }
+    
+    return path;
 }
 
 //Check if file exists, and deletes them if so
