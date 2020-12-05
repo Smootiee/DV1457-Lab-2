@@ -9,6 +9,7 @@
 #include "db_manager.h"
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
 pthread_mutex_init(lock);
 
 
@@ -161,15 +162,15 @@ char* insertRecord(request_t* request){
     char* path = malloc(sizeof(char)*1500);
     strcpy(path, "../database/");
     strcat(path,request->table_name);
-    FILE *ftab = fopen(path, "a");
+    FILE *ftab = fopen(path, "r");
     if(ftab == NULL){        
         //Table doesn't exists
         strcpy(path,"Table ");
         strcat(path, request->table_name);
         strcat(path," does not exist!\n");
-        fclose(ftab);
     }else{
-       
+        fclose(ftab);
+        ftab = fopen(path, "a");
         strcat(path, "_data");
         FILE *fmeta = fopen(path, "r");
         if(fmeta == NULL){
@@ -196,7 +197,7 @@ char* insertRecord(request_t* request){
             if(data->data_type == DT_INT){
                 snprintf(tempBuff,12, "%d ", currentCol->int_val);
             }else if(data->data_type == DT_VARCHAR){
-                snprintf(tempBuff,data->char_size, "%s ", currentCol->char_val);
+                snprintf(tempBuff,data->char_size+2, "%s ", currentCol->char_val);
             }
             strcat(entry, tempBuff);
             
@@ -234,23 +235,29 @@ char* selectStatement(request_t* request){
     strcat(path,request->table_name);
     FILE *f = fopen(path, "r");
 
-    if (request->columns == NULL){
+    if(f == NULL){
+        strcpy(path, "Table doesn't exist\n");
+    }else if (request->columns == NULL){
         int size = 1024;
         char line[size];
         int lines =0;
         while (fgets(line,size, f) != NULL){
             lines++;
         }
-        path = realloc(path,sizeof(char)*1024*lines);
-        memset(path,0,sizeof(char)*1024*lines);
-        rewind(f);
-        while (fgets(line,size, f) != NULL){
-            strcat(path, line);
+        if(lines == 0){
+            strcpy(path, "--Table is empty--\n");
+        }else{
+            path = realloc(path,sizeof(char)*1024*lines);
+            memset(path,0,sizeof(char)*1024*lines);
+            rewind(f);
+            while (fgets(line,size, f) != NULL){
+                strcat(path, line);
+            }
         }
     }
     else
     {
-        strcpy(path, "Selecting columns not available");
+        strcpy(path, "Selecting columns not available\n");
     }
     pthread_mutex_unlock(&lock);
     return path;

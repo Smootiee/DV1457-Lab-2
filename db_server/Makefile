@@ -12,7 +12,7 @@ LIBRARYS = lib/librequest.so -lpthread
 
 
 #Compiler flags
-CFLAGS=-I$(INC_DIR) -L$(LIB_DIR) -g
+CFLAGS=-I$(INC_DIR) -L$(LIB_DIR) -g -w
 
 #Get all sources
 SRCS = $(wildcard $(SRC_DIR)/*.c)

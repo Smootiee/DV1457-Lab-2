@@ -5,10 +5,5 @@
 
 void *clientHandler(void *ptr);
 
-
-
-
-
-
 #pragma GCC visibility pop
 #endif
