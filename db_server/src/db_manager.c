@@ -170,7 +170,7 @@ char* insertRecord(request_t* request){
         strcat(path," does not exist!\n");
     }else{
         fclose(ftab);
-        //ftab is actuall table, fmeta is metadata of table
+        //ftab is actual table, fmeta is metadata of table
         ftab = fopen(path, "a");
         strcat(path, "_data");
         FILE *fmeta = fopen(path, "r");
