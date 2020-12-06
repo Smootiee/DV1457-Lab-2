@@ -9,10 +9,7 @@
 #include "db_manager.h"
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-
 pthread_mutex_init(lock);
-
-
 
 
 //table_name = actual table
@@ -36,14 +33,11 @@ char* createTable(request_t* request){
         fclose(f);
         strcat(path, "_data");
         f = fopen(path, "w+");
-        //TODO: INSERT METADATA
 
         column_t *colNams = request->columns;
-        
-
+        //create one row for each column in the table, with metadata about each corresponding column.
         while (colNams != NULL){
-            fprintf(f, "%s %d %d %d\n", colNams->name, colNams->data_type, colNams->is_primary_key, colNams->char_size);  
-                 
+            fprintf(f, "%s %d %d %d\n", colNams->name, colNams->data_type, colNams->is_primary_key, colNams->char_size);      
             colNams = colNams->next;
         }
         
@@ -65,6 +59,8 @@ char* listTables(request_t* request){
     struct dirent* dir;
     d = opendir("../database");
     if(d != NULL){
+        //Iterates through all the files in the database directory, looking for files that aren't directorys or ending in _data, meaning they are the name of a table.
+        //Drawback is that if a file is created in this folder, it will be seen as a table
         while((dir = readdir(d)) != NULL){
             //Check if file
             if(dir->d_type == 8){
@@ -85,8 +81,8 @@ char* listTables(request_t* request){
 
 char* listSchemas(request_t* request){
     
-    //check all metafiles in database folder, print names and info for each.    
-    char* path = malloc(sizeof(char)*255);
+    //check specified tables metadata, print name and datatype for each column in table
+    char* path = malloc(sizeof(char)*1024);
     strcpy(path, "../database/");
     strcat(path,request->table_name);
     FILE *f = fopen(path, "r");
@@ -99,10 +95,13 @@ char* listSchemas(request_t* request){
     }else{
         fclose(f);    
         strcat(path, "_data");
+        //Get all the metadata in a metaData struct to iterate over
         struct metaData* data = getMetaData(path);
         struct metaData* orig = data;
         strcpy(path, "");
+        //Iterates over all the columns
         while (data != NULL){
+            //Write name of column, followed by datatype and a newline to the return char array
             strcat(path,data->name);
             if(data->data_type == DT_INT){
                 strcat(path,"\tINT\n");
@@ -140,7 +139,7 @@ char* dropTable(request_t* request){
         fclose(f);
         if(!remove(path)){
             strcat(path, "_data");
-            remove(path),
+            remove(path);
             strcpy(path, "Table ");
             strcat(path, request->table_name);
             strcat(path, " dropped succesfully!\n");
@@ -159,6 +158,7 @@ char* insertRecord(request_t* request){
     //check if file exists
     //check if insert is correctly formatted
     //insert into table
+
     char* path = malloc(sizeof(char)*1500);
     strcpy(path, "../database/");
     strcat(path,request->table_name);
@@ -170,6 +170,7 @@ char* insertRecord(request_t* request){
         strcat(path," does not exist!\n");
     }else{
         fclose(ftab);
+        //ftab is actuall table, fmeta is metadata of table
         ftab = fopen(path, "a");
         strcat(path, "_data");
         FILE *fmeta = fopen(path, "r");
@@ -183,6 +184,7 @@ char* insertRecord(request_t* request){
         column_t* currentCol = request->columns;
         char* tempBuff = malloc(sizeof(char)*150);
         int error = 0;
+        //Loop through columns, and check if datatype is correct, and number of values are correct, and writing the entry in a temporary buffer
         while(data != NULL && currentCol != NULL && !error){
             if ((data->next == NULL && currentCol->next != NULL) || (data->next != NULL && currentCol->next == NULL)){
                 error = 1;
@@ -206,6 +208,7 @@ char* insertRecord(request_t* request){
         }
         deleteMetaData(orig);
 
+        //If no error occured, insert the temporary buffer to the table
         if(!error){
             strcpy(path, "Inserted values(");
             strcat(path, entry);
@@ -241,12 +244,15 @@ char* selectStatement(request_t* request){
         int size = 1024;
         char line[size];
         int lines =0;
+        //get number of rows in table
         while (fgets(line,size, f) != NULL){
             lines++;
         }
+        //If no rows exist, return message telling client so
         if(lines == 0){
             strcpy(path, "--Table is empty--\n");
         }else{
+            //Otherwise, read all the lines, and return them to the user.
             path = realloc(path,sizeof(char)*1024*lines);
             memset(path,0,sizeof(char)*1024*lines);
             rewind(f);
@@ -255,6 +261,7 @@ char* selectStatement(request_t* request){
             }
         }
     }
+    //Will occur if not SELECT * is used. Selecting columns is not implemented.
     else
     {
         strcpy(path, "Selecting columns not available\n");
@@ -264,6 +271,11 @@ char* selectStatement(request_t* request){
 }
 
 char* dbRequest(request_t* request){
+    /*
+    This is the main db manager function, called by client threads. Depending on the request type, it will
+    send the request to the corresponding function handling that request type. It will also lock a mutex lock, 
+    that each function will unlock after they are done managing the database function.
+    */
     char* error;
     pthread_mutex_lock(&lock);
     switch (request->request_type)
@@ -289,12 +301,15 @@ char* dbRequest(request_t* request){
         default:
             error = malloc(sizeof(char)*255);
             strcpy(error, "Request type not defined\n");
+            pthread_mutex_unlock(&lock);
             return error;
             
     }
     
 }
 
+//Return a struct of type metaData, containing the metaData for the table in an easy to use format for functions needing it. 
+//It's just a helper function to remove code repetition. If it can't open the metadata file, it will return NULL.
 struct metaData* getMetaData(char* path){
 
     FILE *f = fopen(path, "r");
@@ -323,6 +338,7 @@ struct metaData* getMetaData(char* path){
     }
 }
 
+//Function to free the memory allocated by the getMetaData function. Works by using recursive free on the struct
 int deleteMetaData(struct metaData* data){
     if(data->next != NULL){
         deleteMetaData(data->next);

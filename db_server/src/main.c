@@ -16,7 +16,7 @@ void printHelpText();
 
 volatile sig_atomic_t exitRequested = 0;
 
-//When ctrl+c is pressed, main loop while stop. Also, it's likely that this thread is stuck at the accept() call, but this call will return with error
+//When ctrl+c is pressed, main loop will stop. Also, it's likely that this thread is stuck at the accept() call, but accept() call will return with error
 //telling us that an interupt has occured, making it easy to cleanup.
 void signal_handler(int signum)
 {
@@ -108,10 +108,11 @@ int main(int argc, char const *argv[]){
         
     }
 
-    //No longer listening for iincomming connections
+    //No longer listening for incomming connections
     for(int i =0; i < nbr_of_threads-1; i++){
         void **ptr;
-        //sending usersignal, resulting in termination of connection and closure of connection
+        //sending user signal 1, resulting in termination of connection and closure of connection by the client threads.
+        //This is the only time our threads need to communicate with eachother.
         pthread_kill(threads[i], SIGUSR1);
         //wait for threads to succedd with cleanup
         pthread_join(threads[i],ptr);
